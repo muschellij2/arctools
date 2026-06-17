@@ -42,7 +42,7 @@ midnight_to_midnight <- function(acc, acc_ts){
   ## Added 2021-01-06 as protective measure in case one fails to submit
   ## acc_ts as lubridate::ymd_hms()-generated is.POSIXct
   ## (note: base::as.POSIXct()-generated IS NOT OK!)
-  if(class(acc_ts)[1]!= "POSIXct"){
+  if (!lubridate::is.POSIXct(acc_ts)) {
     acc_ts <- lubridate::ymd_hms(acc_ts)
   }
 

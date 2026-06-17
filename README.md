@@ -1,40 +1,41 @@
 arctools
 ================
 
--   [Installation](#installation)
--   [Documentation](#documentation)
--   [Using `arctools` package to compute physical activity
-    summaries](#using-arctools-package-to-compute-physical-activity-summaries)
-    -   [Reading PA data](#reading-pa-data)
-    -   [Computing summaries with `activity_stats`
-        method](#computing-summaries-with-activity_stats-method)
-    -   [Output explained](#output-explained)
--   [Additional`activity_stats` method
-    options](#additionalactivity_stats-method-options)
-    -   [Summarizing PA within a fixed set of minutes
-        only](#summarizing-pa-within-a-fixed-set-of-minutes-only)
-    -   [Summarizing PA within a subset of weekdays
-        only](#summarizing-pa-within-a-subset-of-weekdays-only)
-    -   [Summarizing PA with a fixed set of minutes
-        excluded](#summarizing-pa-with-a-fixed-set-of-minutes-excluded)
-    -   [Summarizing PA with in-bed time
-        excluded](#summarizing-pa-with-in-bed-time-excluded)
--   [Components of `activity_stats`
-    method](#components-of-activity_stats-method)
-    -   [Expand the length of minute-level AC vector to full 24-hour
-        periods with
-        `midnight_to_midnight`](#expand-the-length-of-minute-level-ac-vector-to-full-24-hour-periods-with-midnight_to_midnight)
-    -   [Get wear/non-wear flag with
-        `get_wear_flag`](#get-wearnon-wear-flag-with-get_wear_flag)
-    -   [Get valid/non-valid day flag with
-        `get_valid_day_flag`](#get-validnon-valid-day-flag-with-get_valid_day_flag)
-    -   [Impute missing data with
-        `impute_missing_data`](#impute-missing-data-with-impute_missing_data)
-    -   [Create PA characteristics with
-        `summarize_PA`](#create-pa-characteristics-with-summarize_pa)
--   [Citation](#citation)
+- [Installation](#installation)
+- [Documentation](#documentation)
+- [Using `arctools` package to compute physical activity
+  summaries](#using-arctools-package-to-compute-physical-activity-summaries)
+  - [Reading PA data](#reading-pa-data)
+  - [Computing summaries with `activity_stats`
+    method](#computing-summaries-with-activity_stats-method)
+  - [Output explained](#output-explained)
+- [Additional`activity_stats` method
+  options](#additionalactivity_stats-method-options)
+  - [Summarizing PA within a fixed set of minutes
+    only](#summarizing-pa-within-a-fixed-set-of-minutes-only)
+  - [Summarizing PA within a subset of weekdays
+    only](#summarizing-pa-within-a-subset-of-weekdays-only)
+  - [Summarizing PA with a fixed set of minutes
+    excluded](#summarizing-pa-with-a-fixed-set-of-minutes-excluded)
+  - [Summarizing PA with in-bed time
+    excluded](#summarizing-pa-with-in-bed-time-excluded)
+- [Components of `activity_stats`
+  method](#components-of-activity_stats-method)
+  - [Expand the length of minute-level AC vector to full 24-hour periods
+    with
+    `midnight_to_midnight`](#expand-the-length-of-minute-level-ac-vector-to-full-24-hour-periods-with-midnight_to_midnight)
+  - [Get wear/non-wear flag with
+    `get_wear_flag`](#get-wearnon-wear-flag-with-get_wear_flag)
+  - [Get valid/non-valid day flag with
+    `get_valid_day_flag`](#get-validnon-valid-day-flag-with-get_valid_day_flag)
+  - [Impute missing data with
+    `impute_missing_data`](#impute-missing-data-with-impute_missing_data)
+  - [Create PA characteristics with
+    `summarize_PA`](#create-pa-characteristics-with-summarize_pa)
+- [Citation](#citation)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
 <!-- badges: start -->
 
 [![Codecov test
@@ -83,9 +84,13 @@ package is loaded.
 ``` r
 library(arctools)
 library(data.table)
+#> Warning: package 'data.table' was built under R version 4.4.3
 library(dplyr)
+#> Warning: package 'dplyr' was built under R version 4.4.3
 library(lubridate)
+#> Warning: package 'lubridate' was built under R version 4.4.1
 library(ggplot2)
+#> Warning: package 'ggplot2' was built under R version 4.4.3
 
 ## Read one of the data sets
 fpath <- system.file("extdata", extdata_fnames[1], package = "arctools")
@@ -102,38 +107,44 @@ rbind(head(dat, 3), tail(dat, 3))
 
 The data columns are:
 
--   `Axis1` - sensor’s X axis minute-level counts data,
--   `Axis2` - sensor’s Y axis minute-level counts data,
--   `Axis3` - sensor’s Z axis minute-level counts data,
--   `vectormagnitude` - minute-level counts data defined as
-    `sqrt(Axis1^2 + Axis2^2 + Axis3^2)`,
--   `timestamp` - time-stamps corresponding to minute-level measures.
+- `Axis1` - sensor’s X axis minute-level counts data,
+- `Axis2` - sensor’s Y axis minute-level counts data,
+- `Axis3` - sensor’s Z axis minute-level counts data,
+- `vectormagnitude` - minute-level counts data defined as
+  `sqrt(Axis1^2 + Axis2^2 + Axis3^2)`,
+- `timestamp` - time-stamps corresponding to minute-level measures.
 
 ``` r
 ## Plot activity counts
 ## Format timestamp data column from character to POSIXct object
 ggplot(dat, aes(x = ymd_hms(timestamp), y = vectormagnitude)) + 
-  geom_line(size = 0.3, alpha = 0.8) + 
+  geom_line(linewidth = 0.3, alpha = 0.8) + 
   labs(x = "Time", y = "Activity counts") + 
   theme_gray(base_size = 10) + 
   scale_x_datetime(date_breaks = "1 day", date_labels = "%b %d")
+#> Warning: 7 failed to parse.
+#> Warning: Removed 7 rows containing missing values or values outside the scale range
+#> (`geom_line()`).
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-1.png" alt="" width="100%" />
 
 ### Computing summaries with `activity_stats` method
 
 ``` r
 acc    <- dat$vectormagnitude
 acc_ts <- ymd_hms(dat$timestamp)
+#> Warning: 7 failed to parse.
 
 activity_stats(acc, acc_ts)
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
 #>   n_days n_valid_days wear_time_on_valid_days     tac     tlac    ltac
-#> 1      8            4                    1440 2826648 6429.838 14.8546
+#> 1      9            4                    1439 2826648 6429.838 14.8546
 #>        astp       satp time_spent_active time_spent_nonactive
-#> 1 0.1781782 0.09516215             499.5                940.5
+#> 1 0.1781782 0.09579564             499.5                939.5
 #>   no_of_active_bouts no_of_nonactive_bouts mean_active_bout mean_nonactive_bout
-#> 1                 89                  89.5          5.61236            10.50838
+#> 1                 89                    90          5.61236            10.43889
 ```
 
 ### Output explained
@@ -142,54 +153,52 @@ To explain `activity_stats` method output, we first define the terms
 *activity count*, *active/non-active minute*, *active/non-active bout*,
 and *valid day*.
 
--   Activity count (AC) - a minute-level metric of PA volume.
--   Active minute - a minute with AC equal or above a fixed threshold;
-    for wrist-worn Actigraph  
-    we use AC&gt;=1853 (method’s default).
--   Non-active (sedentary) minute - a minute with AC below a fixed
-    threshold; for wrist-worn Actigraph  
-    we use AC&lt;1853 (method’s default).
--   Active bout - a sequence of 1 or more consecutive active minute(s).
--   Non-active bout - a sequence of 1 or more consecutive non-active
-    minute(s).
--   Valid day - a day with no more than 10% of the non-wear time (see
-    *Details* in `?activity_stats`).
+- Activity count (AC) - a minute-level metric of PA volume.
+- Active minute - a minute with AC equal or above a fixed threshold; for
+  wrist-worn Actigraph  
+  we use AC\>=1853 (method’s default).
+- Non-active (sedentary) minute - a minute with AC below a fixed
+  threshold; for wrist-worn Actigraph  
+  we use AC\<1853 (method’s default).
+- Active bout - a sequence of 1 or more consecutive active minute(s).
+- Non-active bout - a sequence of 1 or more consecutive non-active
+  minute(s).
+- Valid day - a day with no more than 10% of the non-wear time (see
+  *Details* in `?activity_stats`).
 
 Meta information:
 
--   `n_days` - number of days (unique day dates) of data collection.
--   `n_valid_days` - number of days (unique day dates) of data
-    collection determined as valid days.
--   `wear_time_on_valid_days` - average number of wear-time minutes
-    across valid days.
+- `n_days` - number of days (unique day dates) of data collection.
+- `n_valid_days` - number of days (unique day dates) of data collection
+  determined as valid days.
+- `wear_time_on_valid_days` - average number of wear-time minutes across
+  valid days.
 
 Summaries of PA volumes metrics:
 
--   `tac` - TAC, Total activity counts per day - sum of AC measured on
-    valid days divided by the number of valid days.
--   `tlac` - TLAC, Total-log activity counts per day - sum of log(1+AC)
-    measured on valid days divided by the number of valid days. Here
-    ‘log’ denotes the natural logarithm.
--   `ltac` - LTAC, Log-total activity counts - natural logarithm of TAC.
--   `time_spent_active` - Average number of active minutes per valid
-    day.
--   `time_spent_nonactive` - Average number of sedentary minutes per
-    valid day.
+- `tac` - TAC, Total activity counts per day - sum of AC measured on
+  valid days divided by the number of valid days.
+- `tlac` - TLAC, Total-log activity counts per day - sum of log(1+AC)
+  measured on valid days divided by the number of valid days. Here ‘log’
+  denotes the natural logarithm.
+- `ltac` - LTAC, Log-total activity counts - natural logarithm of TAC.
+- `time_spent_active` - Average number of active minutes per valid day.
+- `time_spent_nonactive` - Average number of sedentary minutes per valid
+  day.
 
 Summaries of PA fragmentation metrics:
 
--   `astp` - ASTP, active to sedentary transition probability on valid
-    days.
--   `satp` - SATP, sedentary to active transition probability on valid
-    days.
--   `no_of_active_bouts` - Average number of active minutes per valid
-    day.
--   `no_of_nonactive_bouts` - Average number of sedentary minutes per
-    valid day.
--   `mean_active_bout` - Average duration (in minutes) of an active bout
-    on valid days.
--   `mean_nonactive_bout` - Average duration (in minutes) of a sedentary
-    bout on valid days.
+- `astp` - ASTP, active to sedentary transition probability on valid
+  days.
+- `satp` - SATP, sedentary to active transition probability on valid
+  days.
+- `no_of_active_bouts` - Average number of active minutes per valid day.
+- `no_of_nonactive_bouts` - Average number of sedentary minutes per
+  valid day.
+- `mean_active_bout` - Average duration (in minutes) of an active bout
+  on valid days.
+- `mean_nonactive_bout` - Average duration (in minutes) of a sedentary
+  bout on valid days.
 
 # Additional`activity_stats` method options
 
@@ -206,16 +215,18 @@ Here, we summarize PA observed between 12:00 AM and 6:00 AM.
 ``` r
 subset_12am_6am <- 1 : (6 * 1440/24)
 activity_stats(acc, acc_ts, subset_minutes = subset_12am_6am) 
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
 #>   n_days n_valid_days wear_time_on_valid_days tac_0to6only tlac_0to6only
-#> 1      8            4                    1440      65477.5      322.1523
+#> 1      9            4                    1439      65477.5      322.1523
 #>   ltac_0to6only astp_0to6only satp_0to6only time_spent_active_0to6only
-#> 1      11.08946     0.5581395    0.02004295                      10.75
+#> 1      11.08946     0.5581395     0.0201005                      10.75
 #>   time_spent_nonactive_0to6only no_of_active_bouts_0to6only
-#> 1                        349.25                           6
+#> 1                        348.25                           6
 #>   no_of_nonactive_bouts_0to6only mean_active_bout_0to6only
 #> 1                              7                  1.791667
 #>   mean_nonactive_bout_0to6only
-#> 1                     49.89286
+#> 1                        49.75
 ```
 
 By default, column names have a suffix added to denote that a subset of
@@ -232,25 +243,33 @@ out <- rbind(
   activity_stats(acc, acc_ts, subset_minutes = subset_6am_12pm, adjust_out_colnames = FALSE),
   activity_stats(acc, acc_ts, subset_minutes = subset_12pm_6pm, adjust_out_colnames = FALSE),
   activity_stats(acc, acc_ts, subset_minutes = subset_6pm_12am, adjust_out_colnames = FALSE))
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
 rownames(out) <- c("12am-6am", "6am-12pm", "12pm-6pm", "6pm-12am")
 out
 #>          n_days n_valid_days wear_time_on_valid_days       tac      tlac
-#> 12am-6am      8            4                    1440   65477.5  322.1523
-#> 6am-12pm      8            4                    1440 1089788.5 2139.4534
-#> 12pm-6pm      8            4                    1440  994104.8 2194.8539
-#> 6pm-12am      8            4                    1440  677277.5 1773.3781
-#>              ltac      astp       satp time_spent_active time_spent_nonactive
-#> 12am-6am 11.08946 0.5581395 0.02004295             10.75               349.25
-#> 6am-12pm 13.90149 0.1501377 0.15406162            181.50               178.50
-#> 12pm-6pm 13.80960 0.1751337 0.18641618            187.00               173.00
-#> 6pm-12am 13.42584 0.2037422 0.10323253            120.25               239.75
+#> 12am-6am      9            4                    1439   65477.5  322.1523
+#> 6am-12pm      9            4                    1439 1089788.5 2139.4534
+#> 12pm-6pm      9            4                    1439  994104.8 2194.8539
+#> 6pm-12am      9            4                    1439  677277.5 1773.3781
+#>              ltac      astp      satp time_spent_active time_spent_nonactive
+#> 12am-6am 11.08946 0.5581395 0.0201005             10.75               348.25
+#> 6am-12pm 13.90149 0.1501377 0.1540616            181.50               178.50
+#> 12pm-6pm 13.80960 0.1751337 0.1864162            187.00               173.00
+#> 6pm-12am 13.42584 0.2037422 0.1032325            120.25               239.75
 #>          no_of_active_bouts no_of_nonactive_bouts mean_active_bout
 #> 12am-6am               6.00                  7.00         1.791667
 #> 6am-12pm              27.25                 27.50         6.660550
 #> 12pm-6pm              32.75                 32.25         5.709924
 #> 6pm-12am              24.50                 24.75         4.908163
 #>          mean_nonactive_bout
-#> 12am-6am           49.892857
+#> 12am-6am           49.750000
 #> 6am-12pm            6.490909
 #> 12pm-6pm            5.364341
 #> 6pm-12am            9.686869
@@ -273,18 +292,20 @@ data collection without subsetting ranges 8 days.
 # day of a week indices 2,3,4,5,6 correspond to Mon,Tue,Wed,Thu,Fri 
 subset_weekdays <- c(2:6)
 activity_stats(acc, acc_ts, subset_weekdays = subset_weekdays) 
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
 #>   n_days n_valid_days wear_time_on_valid_days tac_weekdays23456only
-#> 1      6            3                    1440               2865711
+#> 1      6            3                    1439               2865711
 #>   tlac_weekdays23456only ltac_weekdays23456only astp_weekdays23456only
 #> 1               6444.155               14.86833              0.1757294
 #>   satp_weekdays23456only time_spent_active_weekdays23456only
-#> 1             0.09459459                            502.6667
+#> 1             0.09540762                            502.6667
 #>   time_spent_nonactive_weekdays23456only no_of_active_bouts_weekdays23456only
-#> 1                               937.3333                             88.33333
+#> 1                               936.3333                             88.33333
 #>   no_of_nonactive_bouts_weekdays23456only mean_active_bout_weekdays23456only
-#> 1                                88.66667                           5.690566
+#> 1                                89.33333                           5.690566
 #>   mean_nonactive_bout_weekdays23456only
-#> 1                              10.57143
+#> 1                              10.48134
 ```
 
 Note the `subset_weekdays` argument can be combined with other
@@ -295,8 +316,10 @@ activity summaries should be computed.
 # day of a week indices 7,1 correspond to Sat,Sun
 subset_weekdays <- c(7,1)
 activity_stats(acc, acc_ts, subset_weekdays = subset_weekdays, subset_minutes = subset_6am_12pm) 
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
 #>   n_days n_valid_days wear_time_on_valid_days tac_6to12only_weekdays17only
-#> 1      2            1                    1440                       917368
+#> 1      2            1                    1439                       917368
 #>   tlac_6to12only_weekdays17only ltac_6to12only_weekdays17only
 #> 1                      2071.864                      13.72926
 #>   astp_6to12only_weekdays17only satp_6to12only_weekdays17only
@@ -329,8 +352,10 @@ subset_11pm_5am <- c(
   1 : (5 * 1440/24)            ## midnight - 5:00 AM
 ) 
 activity_stats(acc, acc_ts, exclude_minutes = subset_11pm_5am) 
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
 #>   n_days n_valid_days wear_time_on_valid_days tac_23to5removed
-#> 1      8            4                    1440          2735749
+#> 1      9            4                    1439          2735749
 #>   tlac_23to5removed ltac_23to5removed astp_23to5removed satp_23to5removed
 #> 1           6052.84          14.82192         0.1702018         0.1395057
 #>   time_spent_active_23to5removed time_spent_nonactive_23to5removed
@@ -354,11 +379,11 @@ software.
 The ActiLife-estimated in-bed data file is attached to the `arctools`
 package. The sleep data columns include:
 
--   `Subject Name` - subject IDs corresponding to AC data, stored in
-    `extdata_fnames`,
--   `In Bed Time` - ActiLife-estimated start of in-bed interval for each
-    day of the measurement,
--   `Out Bed Time` - ActiLife-estimated end of in-bed interval.
+- `Subject Name` - subject IDs corresponding to AC data, stored in
+  `extdata_fnames`,
+- `In Bed Time` - ActiLife-estimated start of in-bed interval for each
+  day of the measurement,
+- `Out Bed Time` - ActiLife-estimated end of in-bed interval.
 
 ``` r
 ## Read sleep details data file
@@ -386,8 +411,12 @@ in_bed_time  <- mdy_hms(SleepDetails_sub[, "In Bed Time"])
 out_bed_time <- mdy_hms(SleepDetails_sub[, "Out Bed Time"])
 
 activity_stats(acc, acc_ts, in_bed_time = in_bed_time, out_bed_time = out_bed_time) 
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
+#> Warning in midnight_to_midnight(acc = acc_ts, acc_ts = acc_ts): Removed 6
+#> timestamp duplicate observations.
 #>   n_days n_valid_days wear_time_on_valid_days tac_inbedremoved
-#> 1      8            4                    1440          2746582
+#> 1      9            4                    1439          2746582
 #>   tlac_inbedremoved ltac_inbedremoved astp_inbedremoved satp_inbedremoved
 #> 1          6062.753          14.82587         0.1703551         0.1580934
 #>   time_spent_active_inbedremoved time_spent_nonactive_inbedremoved
@@ -406,9 +435,9 @@ produce `activity_stats` results step by step with these functions.
 
 We reuse the objects:
 
--   `acc` - a numeric vector; minute-level activity counts data,
--   `acc_ts` - a `POSIXct` vector; minute-level time of `acc` data
-    collection.
+- `acc` - a numeric vector; minute-level activity counts data,
+- `acc_ts` - a `POSIXct` vector; minute-level time of `acc` data
+  collection.
 
 ``` r
 df <- data.frame(acc = acc, acc_ts = acc_ts)
@@ -424,11 +453,11 @@ rbind(head(df, 3), tail(df, 3))
 
 ### Expand the length of minute-level AC vector to full 24-hour periods with `midnight_to_midnight`
 
--   In the returned vector, the first observation corresponds to the
-    minute of `00:00-00:01` on the first day of data collection, and the
-    last observation corresponds to the minute of `23:50-00:00` on the
-    last day of data collection.
--   Entries corresponding to non-measured minutes are filled with `NA`.
+- In the returned vector, the first observation corresponds to the
+  minute of `00:00-00:01` on the first day of data collection, and the
+  last observation corresponds to the minute of `23:50-00:00` on the
+  last day of data collection.
+- Entries corresponding to non-measured minutes are filled with `NA`.
 
 Here, collected data cover total of `7*24*1440 = 10080` minutes (from
 `2018-07-13 10:00:00` to `2018-07-20 09:59:00`), but spans
@@ -437,10 +466,12 @@ Here, collected data cover total of `7*24*1440 = 10080` minutes (from
 
 ``` r
 acc <- midnight_to_midnight(acc = acc, acc_ts = acc_ts)
+#> Warning in midnight_to_midnight(acc = acc, acc_ts = acc_ts): Removed 6
+#> timestamp duplicate observations.
 
 ## Vector length on non NA-obs, vector length after acc 
 c(length(acc[!is.na(acc)]), length(acc))
-#> [1] 10080 11520
+#> [1] 10073 12960
 ```
 
 ### Get wear/non-wear flag with `get_wear_flag`
@@ -450,10 +481,10 @@ minute of activity counts data. Method implements wear/non-wear
 detection algorithm closely following that of Choi et al. (2011). See
 `?get_wear_flag` for more details and function arguments.
 
--   The returned vector has value `1` for wear and `0` for non-wear
-    flagged minute.
--   If there is an `NA` entry in a data input vector, then the returned
-    vector will have a corresponding entry set to `NA` too.
+- The returned vector has value `1` for wear and `0` for non-wear
+  flagged minute.
+- If there is an `NA` entry in a data input vector, then the returned
+  vector will have a corresponding entry set to `NA` too.
 
 ``` r
 wear_flag <- get_wear_flag(acc)
@@ -461,7 +492,7 @@ wear_flag <- get_wear_flag(acc)
 ## Proportion of wear time across the days
 wear_flag_mat <- matrix(wear_flag, ncol = 1440, byrow = TRUE)
 round(apply(wear_flag_mat, 1, sum, na.rm = TRUE) / 1440, 3)
-#> [1] 0.583 1.000 0.874 0.679 1.000 1.000 1.000 0.338
+#> [1] 0.583 0.999 0.874 0.679 0.999 0.999 0.999 0.337 0.000
 ```
 
 ### Get valid/non-valid day flag with `get_valid_day_flag`
@@ -478,7 +509,7 @@ valid_day_flag <- get_valid_day_flag(wear_flag)
 ## Compute number of valid days
 valid_day_flag_mat <- matrix(valid_day_flag, ncol = 1440, byrow = TRUE)
 apply(valid_day_flag_mat, 1, mean, na.rm = TRUE)
-#> [1] 0 1 0 0 1 1 1 0
+#> [1] 0 1 0 0 1 1 1 0 0
 ```
 
 ### Impute missing data with `impute_missing_data`
@@ -504,7 +535,7 @@ acc_cpy_imputed <- impute_missing_data(acc_cpy, wear_flag_cpy, valid_day_flag)
 ## Compare mean activity count on valid days before and after imputation
 c(mean(acc_cpy[which(valid_day_flag == 1)]), 
   mean(acc_cpy_imputed[which(valid_day_flag == 1)]))
-#> [1] 1955.521 1957.186
+#> [1] NA NA
 ```
 
 ### Create PA characteristics with `summarize_PA`
@@ -516,30 +547,32 @@ Finally, method `summarize_PA` computes PA summaries. Similarly as
 ``` r
 summarize_PA(acc, acc_ts, wear_flag, valid_day_flag) 
 #>   n_days n_valid_days wear_time_on_valid_days     tac     tlac    ltac
-#> 1      8            4                    1440 2826648 6429.838 14.8546
+#> 1      9            4                    1439 2826648 6429.838 14.8546
 #>        astp       satp time_spent_active time_spent_nonactive
-#> 1 0.1781782 0.09516215             499.5                940.5
+#> 1 0.1781782 0.09579564             499.5                939.5
 #>   no_of_active_bouts no_of_nonactive_bouts mean_active_bout mean_nonactive_bout
-#> 1                 89                  89.5          5.61236            10.50838
+#> 1                 89                    90          5.61236            10.43889
 ```
 
 It returns the same results as the `activity_stats` function:
 
 ``` r
 activity_stats(dat$vectormagnitude, ymd_hms(dat$timestamp))
+#> Warning: 7 failed to parse.
+#> Warning in midnight_to_midnight(acc, acc_ts): Removed 6 timestamp duplicate
+#> observations.
 #>   n_days n_valid_days wear_time_on_valid_days     tac     tlac    ltac
-#> 1      8            4                    1440 2826648 6429.838 14.8546
+#> 1      9            4                    1439 2826648 6429.838 14.8546
 #>        astp       satp time_spent_active time_spent_nonactive
-#> 1 0.1781782 0.09516215             499.5                940.5
+#> 1 0.1781782 0.09579564             499.5                939.5
 #>   no_of_active_bouts no_of_nonactive_bouts mean_active_bout mean_nonactive_bout
-#> 1                 89                  89.5          5.61236            10.50838
+#> 1                 89                    90          5.61236            10.43889
 ```
 
 # Citation
 
 ``` r
 citation("arctools")
-#> 
 #> To cite arctools in publications use:
 #> 
 #>   Karas, M., Schrack, J., and Urbanek, J. (2021). arctools: Processing
