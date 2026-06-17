@@ -14,7 +14,6 @@ Description: Provides functions to process minute level actigraphy-measured acti
 License: GPL-3
 Encoding: UTF-8
 Depends: R (>= 2.10)
-RoxygenNote: 7.2.1
 LazyData: true
 Suggests: 
     testthat,
@@ -27,3 +26,4 @@ Imports:
     lubridate,
     runstats
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0
